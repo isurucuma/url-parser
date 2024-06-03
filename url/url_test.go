@@ -6,7 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-var parseTests = []struct {
+var parseTests = []struct { // this struct is the format for the table test inputs and required outputs
 	name string
 	uri  string
 	want *URL
@@ -22,6 +22,23 @@ var parseTests = []struct {
 		want: &URL{Scheme: "http", Host: "github.com", Path: ""},
 	},
 	/* many more test cases can be easily added */
+}
+
+var stringTests = []struct {
+	name string
+	url  *URL
+	want string
+}{
+	{
+		name: "complete_url",
+		url:  &URL{Scheme: "https", Host: "go.dev", Path: "play"},
+		want: "https://go.dev/play",
+	},
+	{
+		name: "without_path",
+		url:  &URL{Scheme: "https", Host: "go.dev"},
+		want: "https://go.dev/",
+	},
 }
 
 func TestParse(t *testing.T) {
@@ -82,5 +99,31 @@ func TestParseWithoutScheme(t *testing.T) {
 	_, err := Parse(url)
 	if err == nil {
 		t.Fatalf("Parse(%q) err = <nil>, want error", url)
+	}
+}
+
+func TestParseTable(t *testing.T) {
+	for _, tt := range parseTests {
+		t.Logf("run %s", tt.name)
+		got, err := Parse(tt.uri)
+		if err != nil {
+			t.Fatalf("Parse(%q) err = %q, want <nil>", tt.uri, err)
+		}
+
+		if diff := cmp.Diff(got, tt.want); diff != "" {
+			t.Errorf("Parse(%q) mismatch (-want +got):\n%s", tt.uri, diff)
+		}
+	}
+}
+
+func TestURLStringTable(t *testing.T) { // here we have used subtests to run multiple tests
+	for _, tt := range stringTests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("run %s", tt.name)
+			got := tt.url.String()
+			if diff := cmp.Diff(got, tt.want); diff != "" {
+				t.Errorf("String() mismatch (-want +got):\n%s", diff)
+			}
+		})
 	}
 }
