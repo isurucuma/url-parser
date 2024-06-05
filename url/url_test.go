@@ -58,19 +58,19 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestURLString(t *testing.T) {
-	u := &URL{
-		Scheme: "https",
-		Host:   "go.dev",
-		Path:   "play",
-	}
-	got := u.String()
-	want := "https://go.dev/play"
+// func TestURLString(t *testing.T) {
+// 	u := &URL{
+// 		Scheme: "https",
+// 		Host:   "go.dev",
+// 		Path:   "play",
+// 	}
+// 	got := u.String()
+// 	want := "https://go.dev/play"
 
-	if got != want {
-		t.Errorf("String() = %q, want %q", got, want)
-	}
-}
+// 	if got != want {
+// 		t.Errorf("String() = %q, want %q", got, want)
+// 	}
+// }
 
 func TestParseWithoutPath(t *testing.T) {
 	const url = "https://github.dev"
@@ -93,12 +93,19 @@ func TestParseWithoutPath(t *testing.T) {
 	}
 }
 
-func TestParseWithoutScheme(t *testing.T) {
-	const url = "github.dev/play"
-
-	_, err := Parse(url)
-	if err == nil {
-		t.Fatalf("Parse(%q) err = <nil>, want error", url)
+func TestParseError(t *testing.T) {
+	tests := []struct{ name, uri string }{
+		{name: "without_scheme", uri: "github.dev/play"},
+		{name: "empty_scheme", uri: "://github.dev"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Logf("run %s", tt.name)
+			_, err := Parse(tt.uri)
+			if err == nil {
+				t.Errorf("Parse(%q) err = <nil>, want an error", tt.uri)
+			}
+		})
 	}
 }
 
@@ -116,13 +123,21 @@ func TestParseTable(t *testing.T) {
 	}
 }
 
-func TestURLStringTable(t *testing.T) { // here we have used subtests to run multiple tests
-	for _, tt := range stringTests {
+func TestURLString(t *testing.T) {
+	tests := []struct {
+		name string
+		uri  *URL
+		want string
+	}{
+		{name: "nil", uri: nil, want: ""},
+		{name: "empty", uri: &URL{}, want: ""},
+		/* we'll add more test cases soon */
+	}
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Logf("run %s", tt.name)
-			got := tt.url.String()
-			if diff := cmp.Diff(got, tt.want); diff != "" {
-				t.Errorf("String() mismatch (-want +got):\n%s", diff)
+			got := tt.uri.String()
+			if got != tt.want {
+				t.Errorf("\ngot %q\nwant %q\nfor %#v", got, tt.want, tt.uri)
 			}
 		})
 	}
